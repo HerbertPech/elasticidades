@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorio interactivo de elasticidades</title>
+<style>
+:root{
+  --vino:#7a1731;
+  --vino2:#9b2948;
+  --crema:#fbf8f4;
+  --tinta:#202124;
+  --gris:#667085;
+  --borde:#e6e1dc;
+  --verde:#18794e;
+  --ambar:#a15c00;
+  --rojo:#b42318;
+  --azul:#2457a6;
+  --morado:#6f42c1;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  color:var(--tinta);
+  background:linear-gradient(180deg,#f7f1f3 0,#fff 330px);
+}
+header{
+  background:linear-gradient(135deg,var(--vino),#4d0f21);
+  color:#fff;
+  padding:34px 24px 30px;
+}
+.wrap{max-width:1180px;margin:auto}
+.eyebrow{font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;opacity:.78;font-weight:700}
+h1{margin:7px 0 10px;font-size:clamp(1.8rem,4vw,3rem);line-height:1.05}
+header p{max-width:850px;margin:0;color:#f6e8ed;line-height:1.55}
+main{padding:22px 18px 46px}
+.toolbar,.panel,.mini-card,.formula-card,.challenge{
+  background:#fff;border:1px solid var(--borde);border-radius:18px;
+  box-shadow:0 8px 24px rgba(50,25,32,.06)
+}
+.toolbar{padding:12px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{
+  border:0;background:#f5f3f2;color:#40383b;padding:10px 14px;border-radius:12px;
+  font-weight:750;cursor:pointer;transition:.2s
+}
+.tab:hover{transform:translateY(-1px)}
+.tab.active{background:var(--vino);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(320px,.9fr) minmax(420px,1.35fr);gap:18px}
+.panel{padding:20px}
+.panel h2{margin:0 0 6px;font-size:1.35rem}
+.sub{color:var(--gris);font-size:.94rem;line-height:1.45;margin-bottom:16px}
+.scenario-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{
+  border:1px solid var(--borde);background:#fff;padding:8px 10px;border-radius:999px;
+  cursor:pointer;font-size:.84rem;font-weight:650
+}
+.chip:hover,.chip.selected{border-color:var(--vino);background:#fff4f7;color:var(--vino)}
+.control{padding:12px 0;border-top:1px solid #f0ece9}
+.control:first-of-type{border-top:0}
+.control-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px}
+.control label{font-weight:700;font-size:.91rem}
+.value{
+  min-width:88px;text-align:right;font-variant-numeric:tabular-nums;
+  color:var(--vino);font-weight:800
+}
+input[type=range]{width:100%;accent-color:var(--vino)}
+.metrics{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px
+}
+.metric{background:#faf7f5;border:1px solid var(--borde);border-radius:14px;padding:12px}
+.metric .k{font-size:.74rem;color:var(--gris);text-transform:uppercase;letter-spacing:.05em}
+.metric .v{font-size:1.3rem;font-weight:850;margin-top:3px}
+.interpretation{
+  margin-top:12px;padding:14px 15px;border-radius:14px;background:#f8f7fb;border-left:5px solid var(--morado);
+  line-height:1.48
+}
+.canvas-card{padding:18px;min-height:470px}
+canvas{width:100%;height:390px;display:block}
+.legend{display:flex;gap:15px;flex-wrap:wrap;color:var(--gris);font-size:.83rem;margin-top:5px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.row2{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}
+.formula-card,.challenge{padding:18px}
+.formula{font-family:"Times New Roman",serif;font-size:1.22rem;background:#f8f5f3;border-radius:12px;padding:12px 14px;overflow:auto}
+.note{font-size:.89rem;color:var(--gris);line-height:1.48}
+.classification{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.badge{padding:9px;border-radius:10px;background:#fafafa;border:1px solid var(--borde);font-size:.82rem;text-align:center}
+.badge strong{display:block;margin-bottom:3px}
+.challenge h3,.formula-card h3{margin:0 0 10px}
+.challenge button{
+  border:0;background:var(--vino);color:#fff;padding:10px 13px;border-radius:10px;font-weight:750;cursor:pointer
+}
+.challenge button.secondary{background:#efebec;color:#3b3034;margin-left:6px}
+.question{padding:12px;background:#fbfaf9;border-radius:12px;margin:10px 0;line-height:1.45}
+.feedback{min-height:24px;font-weight:700;margin-top:8px}
+footer{max-width:1180px;margin:22px auto 0;color:#7d7276;font-size:.82rem;line-height:1.45;padding:0 2px}
+@media(max-width:850px){
+  .grid,.row2{grid-template-columns:1fr}
+  .canvas-card{min-height:400px}
+  canvas{height:320px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Principios de economía y finanzas</div>
+    <h1>Laboratorio interactivo de elasticidades</h1>
+    <p>Mueve los controles y observa cómo cambia la sensibilidad de consumidores y productores. El simulador calcula la elasticidad con el método del punto medio y traduce el resultado a una interpretación económica.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar" aria-label="Tipos de elasticidad">
+    <button class="tab active" data-mode="price">Precio de la demanda</button>
+    <button class="tab" data-mode="income">Ingreso de la demanda</button>
+    <button class="tab" data-mode="cross">Cruzada de la demanda</button>
+    <button class="tab" data-mode="supply">Elasticidad de la oferta</button>
+  </div>
+
+  <section class="grid">
+    <div class="panel">
+      <h2 id="modeTitle">Elasticidad precio de la demanda</h2>
+      <div class="sub" id="modeDesc"></div>
+
+      <div class="scenario-row" id="scenarios"></div>
+
+      <div id="controls"></div>
+
+      <div class="metrics">
+        <div class="metric"><div class="k">Cambio variable causal</div><div class="v" id="pctX">—</div></div>
+        <div class="metric"><div class="k">Cambio en cantidad</div><div class="v" id="pctQ">—</div></div>
+        <div class="metric"><div class="k">Elasticidad</div><div class="v" id="elasticity">—</div></div>
+        <div class="metric"><div class="k">Clasificación</div><div class="v" id="classification" style="font-size:1rem">—</div></div>
+      </div>
+
+      <div class="interpretation" id="interpretation"></div>
+    </div>
+
+    <div class="panel canvas-card">
+      <canvas id="chart" width="760" height="430" aria-label="Gráfica interactiva"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <section class="row2">
+    <div class="formula-card">
+      <h3>Cómo se calcula</h3>
+      <div class="formula" id="formula"></div>
+      <p class="note" id="formulaNote"></p>
+      <div class="classification" id="rules"></div>
+    </div>
+
+    <div class="challenge">
+      <h3>Reto rápido</h3>
+      <div class="question" id="question"></div>
+      <button id="newChallenge">Nuevo reto</button>
+      <button class="secondary" id="showAnswer">Mostrar respuesta</button>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </section>
+
+  <footer>
+    Recurso didáctico interactivo. Las curvas y los ejemplos son simplificaciones para visualizar relaciones económicas. En bienes Giffen y Veblen se representa un tramo de demanda con pendiente positiva para contrastarlo con la ley ordinaria de la demanda.
+  </footer>
+</main>
+
+<script>
+const cfg = {
+  price:{
+    title:"Elasticidad precio de la demanda",
+    desc:"Mide cuánto cambia la cantidad demandada de un bien ante una variación en su propio precio. En una demanda ordinaria el signo es negativo; para clasificar la sensibilidad suele utilizarse el valor absoluto.",
+    xName:"Precio del bien (Px)", qName:"Cantidad demandada (Qd)", symbol:"Epd",
+    xUnit:"$", qUnit:" unidades",
+    scenarios:[
+      {name:"Normal", x1:100,x2:120,q1:100,q2:84, curve:"down", note:"Demanda ordinaria: al subir el precio, disminuye la cantidad demandada."},
+      {name:"Inelástico",x1:100,x2:120,q1:100,q2:94,curve:"down",note:"La cantidad responde proporcionalmente menos que el precio."},
+      {name:"Elástico",x1:100,x2:120,q1:100,q2:72,curve:"down",note:"La cantidad responde proporcionalmente más que el precio."},
+      {name:"Unitario",x1:100,x2:120,q1:100,q2:82,curve:"down",note:"La respuesta proporcional es cercana a uno."},
+      {name:"Giffen",x1:100,x2:120,q1:70,q2:86,curve:"up",note:"Caso excepcional: el efecto ingreso puede dominar al efecto sustitución y la cantidad aumenta cuando sube el precio."},
+      {name:"Veblen",x1:100,x2:135,q1:70,q2:96,curve:"up",note:"Bien de estatus: en cierto rango, un precio mayor puede elevar su atractivo percibido y la cantidad demandada."}
+    ]
+  },
+  income:{
+    title:"Elasticidad ingreso de la demanda",
+    desc:"Mide la respuesta de la cantidad demandada ante cambios en el ingreso del consumidor. El signo permite distinguir bienes normales e inferiores.",
+    xName:"Ingreso (Y)", qName:"Cantidad demandada (Qd)", symbol:"Ey",
+    xUnit:"$", qUnit:" unidades",
+    scenarios:[
+      {name:"Normal necesario",x1:1000,x2:1200,q1:100,q2:110,curve:"up",note:"Ey > 0 y generalmente menor que 1: al aumentar el ingreso, la demanda aumenta menos que proporcionalmente."},
+      {name:"Normal superior",x1:1000,x2:1200,q1:100,q2:132,curve:"up",note:"Ey > 1: la demanda aumenta más que proporcionalmente al ingreso."},
+      {name:"Inferior",x1:1000,x2:1200,q1:100,q2:88,curve:"down",note:"Ey < 0: al aumentar el ingreso, disminuye la demanda de este bien."}
+    ]
+  },
+  cross:{
+    title:"Elasticidad cruzada de la demanda",
+    desc:"Mide cómo cambia la cantidad demandada del bien X cuando cambia el precio de otro bien Y. El signo identifica si los bienes se comportan como sustitutos o complementarios.",
+    xName:"Precio del bien Y (Py)", qName:"Cantidad demandada de X (Qx)", symbol:"Exy",
+    xUnit:"$", qUnit:" unidades",
+    scenarios:[
+      {name:"Sustitutos",x1:50,x2:60,q1:100,q2:122,curve:"up",note:"Exy > 0: si Y se encarece, aumenta la demanda de X."},
+      {name:"Complementarios",x1:50,x2:60,q1:100,q2:82,curve:"down",note:"Exy < 0: si Y se encarece, disminuye la demanda de X."},
+      {name:"Independientes",x1:50,x2:60,q1:100,q2:101,curve:"flat",note:"Exy ≈ 0: el precio de Y apenas altera la demanda de X."}
+    ]
+  },
+  supply:{
+    title:"Elasticidad precio de la oferta",
+    desc:"Mide cuánto cambia la cantidad ofrecida cuando varía el precio del bien. En condiciones ordinarias su signo es positivo.",
+    xName:"Precio del bien (Px)", qName:"Cantidad ofrecida (Qs)", symbol:"Epo",
+    xUnit:"$", qUnit:" unidades",
+    scenarios:[
+      {name:"Inelástica",x1:100,x2:120,q1:100,q2:108,curve:"up",note:"La producción responde proporcionalmente menos que el precio; suele asociarse con restricciones de capacidad o corto plazo."},
+      {name:"Elástica",x1:100,x2:120,q1:100,q2:132,curve:"up",note:"La cantidad ofrecida responde proporcionalmente más que el precio."},
+      {name:"Unitaria",x1:100,x2:120,q1:100,q2:120,curve:"up",note:"La respuesta proporcional de la cantidad es cercana a la del precio."},
+      {name:"Casi perfectamente inelástica",x1:100,x2:140,q1:100,q2:102,curve:"vertical",note:"La cantidad disponible prácticamente no cambia frente al precio."},
+      {name:"Muy elástica",x1:100,x2:104,q1:100,q2:140,curve:"horizontal",note:"Pequeños cambios de precio generan cambios muy grandes en la cantidad ofrecida."}
+    ]
+  }
+};
+
+let mode="price";
+let state={};
+let challenge={};
+
+const $=s=>document.querySelector(s);
+const canvas=$("#chart"), ctx=canvas.getContext("2d");
+
+function midPct(a,b){
+  const avg=(a+b)/2;
+  return avg===0?0:(b-a)/avg*100;
+}
+function calc(){
+  const dx=midPct(state.x1,state.x2), dq=midPct(state.q1,state.q2);
+  return {dx,dq,e:Math.abs(dx)<1e-9?NaN:dq/dx};
+}
+function fmt(n,d=2){ return Number.isFinite(n)?n.toFixed(d):"—"; }
+function signFmt(n){ return (n>0?"+":"")+fmt(n,2)+"%"; }
+
+function classify(e){
+  if(!Number.isFinite(e)) return "Indefinida";
+  if(mode==="price"){
+    if(e>0) return "Atípica: relación positiva";
+    const a=Math.abs(e);
+    if(a<0.05) return "Casi perfectamente inelástica";
+    if(a<0.95) return "Relativamente inelástica";
+    if(a<=1.05) return "Unitaria";
+    if(a<8) return "Relativamente elástica";
+    return "Muy / perfectamente elástica";
+  }
+  if(mode==="income"){
+    if(e<0) return "Bien inferior";
+    if(e<1) return "Bien normal necesario";
+    if(e<=1.05) return "Elasticidad ingreso unitaria";
+    return "Bien normal superior / lujo";
+  }
+  if(mode==="cross"){
+    if(e>0.08) return "Bienes sustitutos";
+    if(e<-0.08) return "Bienes complementarios";
+    return "Bienes independientes";
+  }
+  if(mode==="supply"){
+    const a=Math.abs(e);
+    if(a<0.05) return "Casi perfectamente inelástica";
+    if(a<0.95) return "Relativamente inelástica";
+    if(a<=1.05) return "Unitaria";
+    if(a<8) return "Relativamente elástica";
+    return "Muy / perfectamente elástica";
+  }
+}
+
+function interpretation(e){
+  const c=classify(e);
+  if(mode==="price"){
+    if(e>0) return `<strong>${c}.</strong> En este tramo, precio y cantidad demandada se mueven en la misma dirección. Esto permite visualizar casos excepcionales como Giffen o Veblen; no es el comportamiento habitual de la demanda.`;
+    const a=Math.abs(e);
+    if(a<.95) return `<strong>${c}.</strong> Un cambio de 1% en el precio provoca aproximadamente un cambio de ${fmt(a)}% en sentido contrario en la cantidad demandada.`;
+    if(a<=1.05) return `<strong>${c}.</strong> El cambio porcentual de la cantidad es aproximadamente proporcional al cambio porcentual del precio.`;
+    return `<strong>${c}.</strong> Un cambio de 1% en el precio provoca aproximadamente un cambio de ${fmt(a)}% en sentido contrario en la cantidad demandada.`;
+  }
+  if(mode==="income"){
+    if(e<0) return `<strong>${c}.</strong> Al aumentar el ingreso, la cantidad demandada tiende a disminuir. La elasticidad ingreso es negativa.`;
+    if(e<1) return `<strong>${c}.</strong> La demanda aumenta con el ingreso, pero menos que proporcionalmente.`;
+    return `<strong>${c}.</strong> La demanda aumenta más que proporcionalmente respecto del ingreso.`;
+  }
+  if(mode==="cross"){
+    if(e>0.08) return `<strong>${c}.</strong> Cuando aumenta el precio de Y, los consumidores desplazan parte de su demanda hacia X.`;
+    if(e<-0.08) return `<strong>${c}.</strong> Cuando aumenta el precio de Y, disminuye el consumo de X porque ambos tienden a utilizarse conjuntamente.`;
+    return `<strong>${c}.</strong> Los cambios en el precio de Y tienen muy poco efecto sobre la cantidad demandada de X.`;
+  }
+  const a=Math.abs(e);
+  if(a<.95) return `<strong>${c}.</strong> La cantidad ofrecida cambia menos que proporcionalmente respecto del precio.`;
+  if(a<=1.05) return `<strong>${c}.</strong> La cantidad ofrecida cambia aproximadamente en la misma proporción que el precio.`;
+  return `<strong>${c}.</strong> La cantidad ofrecida cambia más que proporcionalmente respecto del precio.`;
+}
+
+function rulesHTML(){
+  if(mode==="price") return [
+    ["|Epd| < 1","Inelástica"],["|Epd| = 1","Unitaria"],["|Epd| > 1","Elástica"],
+    ["Epd > 0","Tramo atípico"],["Epd = 0","Perfect. inelástica"],["|Epd| → ∞","Perfect. elástica"]
+  ];
+  if(mode==="income") return [
+    ["Ey < 0","Inferior"],["0 < Ey < 1","Normal necesario"],["Ey > 1","Normal superior"],
+  ];
+  if(mode==="cross") return [
+    ["Exy < 0","Complementarios"],["Exy ≈ 0","Independientes"],["Exy > 0","Sustitutos"]
+  ];
+  return [
+    ["Epo < 1","Inelástica"],["Epo = 1","Unitaria"],["Epo > 1","Elástica"],
+    ["Epo = 0","Perfect. inelástica"],["Epo → ∞","Perfect. elástica"]
+  ];
+}
+
+function renderControls(){
+  const c=cfg[mode];
+  const specs=[
+    ["x1",c.xName+" inicial", mode==="income"?500:10, mode==="income"?5000:300],
+    ["x2",c.xName+" final", mode==="income"?500:10, mode==="income"?5000:300],
+    ["q1",c.qName+" inicial",10,250],
+    ["q2",c.qName+" final",10,250]
+  ];
+  $("#controls").innerHTML=specs.map(([key,label,min,max])=>`
+    <div class="control">
+      <div class="control-head"><label for="${key}">${label}</label><span class="value" id="${key}v"></span></div>
+      <input id="${key}" type="range" min="${min}" max="${max}" step="${mode==="income"?50:1}" value="${state[key]}">
+    </div>`).join("");
+  specs.forEach(([key])=>{
+    const el=$("#"+key);
+    el.addEventListener("input",()=>{state[key]=+el.value; update();});
+  });
+}
+
+function setScenario(i){
+  const s=cfg[mode].scenarios[i];
+  state={x1:s.x1,x2:s.x2,q1:s.q1,q2:s.q2, scenario:i};
+  document.querySelectorAll(".chip").forEach((x,j)=>x.classList.toggle("selected",j===i));
+  renderControls();
+  update();
+}
+
+function renderMode(){
+  const c=cfg[mode];
+  $("#modeTitle").textContent=c.title;
+  $("#modeDesc").textContent=c.desc;
+  $("#scenarios").innerHTML=c.scenarios.map((s,i)=>`<button class="chip ${i===0?"selected":""}" data-i="${i}">${s.name}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>setScenario(+b.dataset.i));
+  $("#formula").innerHTML=`${c.symbol} = 
+    <span style="white-space:nowrap">(% Δ ${c.qName})</span> ÷ 
+    <span style="white-space:nowrap">(% Δ ${c.xName})</span>`;
+  $("#formulaNote").textContent="El porcentaje se calcula con el método del punto medio: (valor final − valor inicial) / promedio de ambos valores × 100. Esto evita que el resultado dependa de cuál punto se tome como base.";
+  $("#rules").innerHTML=rulesHTML().map(r=>`<div class="badge"><strong>${r[0]}</strong>${r[1]}</div>`).join("");
+  setScenario(0);
+  newChallenge();
+}
+
+function update(){
+  const c=cfg[mode], r=calc(), s=c.scenarios[state.scenario]||{};
+  ["x1","x2","q1","q2"].forEach(k=>{
+    const target=$("#"+k+"v");
+    if(target){
+      const unit=k.startsWith("x")?c.xUnit:c.qUnit;
+      target.textContent=(unit==="$"?"$":"")+state[k].toLocaleString("es-MX")+(unit==="$"?"":unit);
+    }
+  });
+  $("#pctX").textContent=signFmt(r.dx);
+  $("#pctQ").textContent=signFmt(r.dq);
+  $("#elasticity").textContent=fmt(r.e,3);
+  $("#classification").textContent=classify(r.e);
+  $("#interpretation").innerHTML=interpretation(r.e)+(s.note?`<div style="margin-top:6px;color:#667085;font-size:.88rem">${s.note}</div>`:"");
+  drawChart(r.e);
+}
+
+function drawChart(e){
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  canvas.width=Math.max(600,rect.width*dpr);
+  canvas.height=Math.max(360,rect.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=rect.width,H=rect.height,pad={l:66,r:22,t:30,b:55};
+  ctx.clearRect(0,0,W,H);
+  ctx.font="12px system-ui"; ctx.fillStyle="#5f5960"; ctx.strokeStyle="#e7e3e0"; ctx.lineWidth=1;
+
+  const xVals=[state.x1,state.x2], qVals=[state.q1,state.q2];
+  const xmin=Math.max(0,Math.min(...xVals)*0.72), xmax=Math.max(...xVals)*1.28;
+  const qmin=Math.max(0,Math.min(...qVals)*0.68), qmax=Math.max(...qVals)*1.30;
+
+  const X=v=>pad.l+(v-xmin)/(xmax-xmin)*(W-pad.l-pad.r);
+  const Y=v=>H-pad.b-(v-qmin)/(qmax-qmin)*(H-pad.t-pad.b);
+
+  // grid
+  for(let i=0;i<=5;i++){
+    const yy=pad.t+i*(H-pad.t-pad.b)/5;
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(W-pad.r,yy);ctx.stroke();
+  }
+  for(let i=0;i<=5;i++){
+    const xx=pad.l+i*(W-pad.l-pad.r)/5;
+    ctx.beginPath();ctx.moveTo(xx,pad.t);ctx.lineTo(xx,H-pad.b);ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle="#7a7378";ctx.lineWidth=1.3;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+
+  // labels
+  const c=cfg[mode];
+  ctx.fillStyle="#494349";ctx.textAlign="center";
+  ctx.fillText(c.xName,W/2,H-16);
+  ctx.save();ctx.translate(18,H/2);ctx.rotate(-Math.PI/2);ctx.fillText(c.qName,0,0);ctx.restore();
+
+  // ticks
+  ctx.fillStyle="#777078";ctx.textAlign="right";
+  for(let i=0;i<=5;i++){
+    const val=qmax-i*(qmax-qmin)/5, yy=pad.t+i*(H-pad.t-pad.b)/5;
+    ctx.fillText(Math.round(val),pad.l-9,yy+4);
+  }
+  ctx.textAlign="center";
+  for(let i=0;i<=5;i++){
+    const val=xmin+i*(xmax-xmin)/5, xx=pad.l+i*(W-pad.l-pad.r)/5;
+    ctx.fillText(Math.round(val),xx,H-pad.b+20);
+  }
+
+  // fitted line through points, extended
+  const dx=state.x2-state.x1;
+  let slope=Math.abs(dx)<1e-9?0:(state.q2-state.q1)/dx;
+  const qAt=x=>state.q1+slope*(x-state.x1);
+  let xa=xmin, xb=xmax;
+  let ya=qAt(xa), yb=qAt(xb);
+  // clip line to chart by drawing only a sampled polyline within bounds
+  ctx.save();
+  ctx.beginPath();ctx.rect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);ctx.clip();
+  ctx.strokeStyle="#7a1731";ctx.lineWidth=3;
+  ctx.beginPath();
+  let first=true;
+  for(let i=0;i<=120;i++){
+    const xv=xmin+(xmax-xmin)*i/120, qv=qAt(xv);
+    const px=X(xv),py=Y(qv);
+    if(first){ctx.moveTo(px,py);first=false}else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // points
+  [[state.x1,state.q1,"A"],[state.x2,state.q2,"B"]].forEach(([x,q,l],i)=>{
+    ctx.beginPath();ctx.fillStyle=i===0?"#2457a6":"#b42318";ctx.arc(X(x),Y(q),7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#2f2930";ctx.font="700 12px system-ui";ctx.textAlign="left";
+    ctx.fillText(`${l} (${x}, ${q})`,X(x)+10,Y(q)-9);
+  });
+
+  // title inside chart
+  ctx.fillStyle="#262226";ctx.font="700 14px system-ui";ctx.textAlign="left";
+  ctx.fillText(`Relación observada · E = ${fmt(e,2)}`,pad.l,pad.t-10);
+
+  $("#legend").innerHTML=`<span><span class="dot" style="background:#2457a6"></span>Punto inicial A</span>
+  <span><span class="dot" style="background:#b42318"></span>Punto final B</span>
+  <span><span class="dot" style="background:#7a1731"></span>Relación entre ambos puntos</span>`;
+}
+
+function newChallenge(){
+  const banks={
+    price:[
+      ["El precio de un producto sube 10% y la cantidad demandada cae 4%. ¿Qué tipo de demanda es?","Relativamente inelástica"],
+      ["El precio sube 8% y la cantidad demandada cae 16%. ¿Qué tipo de demanda es?","Relativamente elástica"],
+      ["En un tramo, al subir el precio también aumenta la cantidad demandada. ¿Qué casos especiales podrían ayudar a ilustrar esta relación?","Giffen o Veblen"]
+    ],
+    income:[
+      ["El ingreso aumenta 12% y la demanda de un bien cae 6%. ¿Cómo se clasifica el bien?","Bien inferior"],
+      ["El ingreso aumenta 10% y la demanda aumenta 4%. ¿Qué tipo de bien es?","Bien normal necesario"],
+      ["El ingreso aumenta 10% y la demanda aumenta 18%. ¿Qué tipo de bien es?","Bien normal superior / lujo"]
+    ],
+    cross:[
+      ["El precio del café aumenta y la demanda de té también aumenta. ¿Qué relación sugieren?","Sustitutos"],
+      ["El precio de las impresoras aumenta y cae la demanda de cartuchos compatibles. ¿Qué relación sugieren?","Complementarios"],
+      ["El precio de un bien cambia y la demanda de otro casi no se modifica. ¿Qué relación sugieren?","Independientes"]
+    ],
+    supply:[
+      ["El precio aumenta 15% y la cantidad ofrecida apenas 5%. ¿Cómo es la oferta?","Relativamente inelástica"],
+      ["El precio aumenta 5% y la cantidad ofrecida 15%. ¿Cómo es la oferta?","Relativamente elástica"],
+      ["La cantidad ofrecida prácticamente no cambia aunque cambie el precio. ¿Qué caso representa?","Casi perfectamente inelástica"]
+    ]
+  };
+  const b=banks[mode][Math.floor(Math.random()*banks[mode].length)];
+  challenge={q:b[0],a:b[1]};
+  $("#question").textContent=b[0];
+  $("#feedback").textContent="";
+}
+$("#newChallenge").onclick=newChallenge;
+$("#showAnswer").onclick=()=>$("#feedback").textContent="Respuesta: "+challenge.a;
+
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active"); mode=t.dataset.mode; renderMode();
+  }
+});
+window.addEventListener("resize",()=>drawChart(calc().e));
+renderMode();
+</script>
+</body>
+</html>
